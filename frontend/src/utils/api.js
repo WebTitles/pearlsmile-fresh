@@ -2,7 +2,7 @@
 // src/utils/api.js — API helper with JWT support
 // ============================================================
 
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const BASE_URL = process.env.REACT_APP_API_URL || "https://pearlsmile-backend.onrender.com";
 
 const getToken = () => localStorage.getItem("pearlsmile_token");
 
