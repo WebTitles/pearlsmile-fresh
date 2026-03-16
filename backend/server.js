@@ -1,75 +1,3 @@
-// require("dotenv").config();
-// const express = require("express");
-// const cors = require("cors");
-// const mongoose = require("mongoose");
-
-// console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-// console.log("  PearlSmile Backend Starting...");
-// console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-
-// if (!process.env.MONGO_URI) {
-//   console.error("❌ MONGO_URI missing! Check your .env file.");
-//   process.exit(1);
-// }
-
-// console.log("✅ .env loaded | PORT:", process.env.PORT || 5000);
-
-// const authRoutes = require("./routes/auth");
-// const servicesRoutes = require("./routes/services");
-// const pricingRoutes = require("./routes/pricing");
-// const patientsRoutes = require("./routes/patients");
-// const appointmentsRoutes = require("./routes/appointments");
-
-// const app = express();
-
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL || "http://localhost:3000",
-//     credentials: true,
-//   }),
-// );
-// app.use(express.json());
-
-// app.use("/api/auth", authRoutes);
-// app.use("/api/services", servicesRoutes);
-// app.use("/api/pricing", pricingRoutes);
-// app.use("/api/patients", patientsRoutes);
-// app.use("/api/appointments", appointmentsRoutes);
-
-// app.get("/api/health", (req, res) =>
-//   res.json({ status: "ok", message: "PearlSmile API running" }),
-// );
-// app.use((req, res) => res.status(404).json({ message: "Route not found" }));
-// app.use((err, req, res, next) =>
-//   res.status(500).json({ message: err.message }),
-// );
-
-// console.log("⏳ Connecting to MongoDB Atlas...\n");
-
-// mongoose
-//   .connect(process.env.MONGO_URI, {
-//     serverSelectionTimeoutMS: 15000,
-//     socketTimeoutMS: 45000,
-//   })
-//   .then(() => {
-//     console.log("✅ MongoDB connected!\n");
-//     const PORT = process.env.PORT || 5000;
-//     app.listen(PORT, () => {
-//       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-//       console.log("🚀 PearlSmile API → http://localhost:" + PORT);
-//       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-//       console.log(
-//         "NEXT STEP: Open browser → http://localhost:5000/api/auth/seed-doctors",
-//       );
-//       console.log("(Do this only once to create doctor login accounts)\n");
-//     });
-//   })
-//   .catch((err) => {
-//     console.error("❌ MongoDB connection FAILED:", err.message);
-//     console.error("\n👉 Fix: Go to Atlas → Network Access → Add IP 0.0.0.0/0");
-//     process.exit(1);
-//   });
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -104,9 +32,24 @@ const billingRoutes = require("./routes/billing");
 
 const app = express();
 
+// ✅ CORS FIX: Allow Netlify frontend + localhost for dev
+const allowedOrigins = [
+  process.env.FRONTEND_URL,           // e.g. https://pearlsmile.netlify.app
+  "http://localhost:3000",
+  "http://localhost:5173",            // Vite dev server (if applicable)
+].filter(Boolean);                    // removes undefined if FRONTEND_URL not set
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      console.warn("❌ CORS blocked for origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   }),
 );
