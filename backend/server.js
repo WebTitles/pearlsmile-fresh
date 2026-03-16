@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const mongoose = require("mongoose");
 
 console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -32,30 +31,17 @@ const billingRoutes = require("./routes/billing");
 
 const app = express();
 
-// ✅ CORS — hardcoded Netlify URL so it always works
-const allowedOrigins = [
-  "https://pearl-smile-dental.netlify.app",
-  "http://localhost:3000",
-  "http://localhost:5173",
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (Postman, curl, mobile)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      console.warn("❌ CORS blocked for origin:", origin);
-      return callback(null, false);
-    },
-    credentials: true,
-  }),
-);
-
-// ✅ Handle preflight OPTIONS requests explicitly
-app.options("*", cors());
+// ✅ CORS — manual headers, no cors() package, guaranteed to work
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://pearl-smile-dental.netlify.app");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json());
 
