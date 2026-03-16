@@ -32,19 +32,19 @@ const billingRoutes = require("./routes/billing");
 
 const app = express();
 
-// ✅ CORS FIX: Allow Netlify frontend + localhost for dev
+// ✅ CORS — hardcoded Netlify URL so it always works
 const allowedOrigins = [
-  process.env.FRONTEND_URL,           // e.g. https://pearlsmile.netlify.app
+  "https://pearl-smile-dental.netlify.app",
   "http://localhost:3000",
-  "http://localhost:5173",            // Vite dev server (if applicable)
-].filter(Boolean);                    // removes undefined if FRONTEND_URL not set
+  "http://localhost:5173",
+];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (mobile apps, curl, Postman)
+      // Allow requests with no origin (Postman, curl, mobile)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       console.warn("❌ CORS blocked for origin:", origin);
@@ -53,6 +53,10 @@ app.use(
     credentials: true,
   }),
 );
+
+// ✅ Handle preflight OPTIONS requests explicitly
+app.options("*", cors());
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
