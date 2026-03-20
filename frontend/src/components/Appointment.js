@@ -233,12 +233,17 @@ export default function Appointment({ showToast }) {
   const [submitting, setSubmitting] = useState(false);
   const [doctors,    setDoctors]    = useState([]);
 
-  // Fetch doctor availability on mount
-  useEffect(() => {
+  // Fetch doctor availability — poll every 10 seconds for instant updates
+useEffect(() => {
+  const fetchDoctors = () => {
     api.get("/auth/doctors")
       .then(data => { if (Array.isArray(data)) setDoctors(data); })
       .catch(() => {});
-  }, []);
+  };
+  fetchDoctors();
+  const interval = setInterval(fetchDoctors, 2000);
+  return () => clearInterval(interval);
+}, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
