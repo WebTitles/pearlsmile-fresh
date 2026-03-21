@@ -216,7 +216,6 @@
 // }
 
 
-
 // ============================================================
 // src/components/Appointment.js
 // ============================================================
@@ -230,20 +229,35 @@ export default function Appointment({ showToast }) {
   const [form, setForm] = useState({
     name: "", phone: "", service: "", date: "", time: "", message: "",
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [doctors,    setDoctors]    = useState([]);
+  const [submitting,    setSubmitting]    = useState(false);
+  const [doctors,       setDoctors]       = useState([]);
+  const [doctorsLoaded, setDoctorsLoaded] = useState(false);
 
-  // Fetch doctor availability — poll every 10 seconds for instant updates
-useEffect(() => {
-  const fetchDoctors = () => {
-    api.get("/auth/doctors")
-      .then(data => { if (Array.isArray(data)) setDoctors(data); })
-      .catch(() => {});
-  };
-  fetchDoctors();
-  const interval = setInterval(fetchDoctors, 2000);
-  return () => clearInterval(interval);
-}, []);
+  useEffect(() => {
+    let interval;
+    let attempts = 0;
+
+    const fetchDoctors = () => {
+      api.get("/auth/doctors")
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            setDoctors(data);
+            setDoctorsLoaded(true);
+            // Once loaded successfully, slow down polling to 5 seconds
+            clearInterval(interval);
+            interval = setInterval(fetchDoctors, 5000);
+          }
+        })
+        .catch(() => {});
+      attempts++;
+    };
+
+    // Try immediately, then every 2 seconds until doctors load
+    fetchDoctors();
+    interval = setInterval(fetchDoctors, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -304,16 +318,53 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* ── Doctor Availability Section ────────────────── */}
-          {doctors.length > 0 && (
-            <div style={{ marginTop: "28px" }}>
-              <div style={{
-                fontSize: "13px", fontWeight: 700, color: "#1e293b",
-                textTransform: "uppercase", letterSpacing: "0.5px",
-                marginBottom: "12px",
-              }}>
-                🩺 Doctors Available Today
+          {/* ── Doctor Availability Section ─────────────────── */}
+          <div style={{ marginTop: "28px" }}>
+            <div style={{
+              fontSize: "13px", fontWeight: 700, color: "#1e293b",
+              textTransform: "uppercase", letterSpacing: "0.5px",
+              marginBottom: "12px",
+            }}>
+              🩺 Doctors Available Today
+            </div>
+
+            {/* Loading skeleton — shows immediately while fetching */}
+            {!doctorsLoaded && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {[1, 2, 3].map(i => (
+                  <div key={i} style={{
+                    padding: "10px 14px", borderRadius: "10px",
+                    border: "1px solid #e5e7eb", background: "#f8fafc",
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}>
+                    <div>
+                      <div style={{
+                        width: "120px", height: "14px", borderRadius: "6px",
+                        background: "#e2e8f0", marginBottom: "6px",
+                      }} />
+                      <div style={{
+                        width: "80px", height: "10px", borderRadius: "6px",
+                        background: "#f1f5f9",
+                      }} />
+                    </div>
+                    <div style={{
+                      width: "80px", height: "22px", borderRadius: "12px",
+                      background: "#e2e8f0",
+                    }} />
+                  </div>
+                ))}
+                <style>{`
+                  @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50%       { opacity: 0.5; }
+                  }
+                `}</style>
               </div>
+            )}
+
+            {/* Actual doctor list — shows once loaded */}
+            {doctorsLoaded && (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {doctors.map(doc => (
                   <div
@@ -326,7 +377,7 @@ useEffect(() => {
                       border: `1px solid ${doc.isAvailable ? "#bbf7d0" : "#fecaca"}`,
                       background: doc.isAvailable ? "#f0fdf4" : "#fef2f2",
                       opacity: doc.isAvailable ? 1 : 0.6,
-                      transition: "all 0.2s",
+                      transition: "all 0.3s",
                     }}
                   >
                     <div>
@@ -353,8 +404,8 @@ useEffect(() => {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
           {/* ── End Doctor Availability ───────────────────── */}
 
         </div>
