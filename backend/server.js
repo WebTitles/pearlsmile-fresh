@@ -125,8 +125,21 @@ const customMedsRoutes   = require("./routes/custommeds");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL?.replace(/\/$/, ""),
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "https://pearl-smile-dental.netlify.app/",
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const cleanOrigin = origin.replace(/\/$/, "");
+    if (allowedOrigins.map(o => o.replace(/\/$/, "")).includes(cleanOrigin)) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true,
 }));
 app.use(express.json());
