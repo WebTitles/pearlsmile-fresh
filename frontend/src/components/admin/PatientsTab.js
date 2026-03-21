@@ -3430,12 +3430,19 @@ function googleSearch(query, customMeds = []) {
   const words = query.toLowerCase().trim().split(/\s+/).filter(w => w.length > 0);
   if (!words.length) return [];
 
+  // Filter out any malformed entries (no name field)
+  const safeMeds = Array.isArray(customMeds)
+    ? customMeds.filter(m => m && typeof m.name === "string" && m.name.trim().length > 0)
+    : [];
+
   const combined = [
     ...MEDICINE_DB,
-    ...customMeds.map(m => ({ ...m, _custom: true })),
+    ...safeMeds.map(m => ({ ...m, _custom: true })),
   ];
 
   const scored = combined.map(m => {
+    // Guard against undefined name (safety check)
+    if (!m || typeof m.name !== "string") return { m, score: 0 };
     const nameLow = m.name.toLowerCase();
     const catLow  = (m.cat || "").toLowerCase();
     let score = 0;
