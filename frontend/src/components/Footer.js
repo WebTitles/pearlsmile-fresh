@@ -58,7 +58,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
-        <p>© 2025 PearlSmile Dental Hospital. All rights reserved.</p>
+        <p>© 2026 Vidyastack. All rights reserved.</p>
         <div style={{ display:"flex", gap:24 }}>
           <a href="#!">Privacy Policy</a>
           <a href="#!">Terms of Service</a>
